@@ -54,6 +54,14 @@ public abstract class BaseCrR4Test extends BaseJpaR4Test implements IResourceLoa
 		return ourFhirContext;
 	}
 
+	public Bundle loadBundle(String theLocation) {
+		return loadBundle(Bundle.class, theLocation);
+	}
+
+	public IParser getFhirParser() {
+		return ourParser;
+	}
+
 	public StubServiceBuilder mockNotFound(String theResource) {
 		OperationOutcome outcome = new OperationOutcome();
 		outcome.getText().setStatusAsString("generated");
@@ -95,6 +103,10 @@ public abstract class BaseCrR4Test extends BaseJpaR4Test implements IResourceLoa
 	public StubServiceBuilder mockFhirPost(String thePath, Resource theResource) {
 		return service(TEST_ADDRESS).post(thePath).body(ourParser.encodeResourceToString(theResource))
 			.willReturn(success());
+	}
+
+	public Bundle makeBundle(List<? extends Resource> theResources) {
+		return makeBundle(theResources.toArray(new Resource[theResources.size()]));
 	}
 
 	public Bundle makeBundle(Resource... theResources) {

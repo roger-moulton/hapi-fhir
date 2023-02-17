@@ -8,6 +8,7 @@ import ca.uhn.fhir.util.ClasspathUtil;
 import org.apache.commons.io.IOUtils;
 import org.hl7.fhir.instance.model.api.IBaseBundle;
 import org.hl7.fhir.instance.model.api.IBaseResource;
+import org.hl7.fhir.r4.model.Bundle;
 import org.springframework.core.io.DefaultResourceLoader;
 
 import java.io.File;
@@ -60,10 +61,6 @@ public interface IResourceLoader extends IDaoRegistryUser {
 		return resource;
 	}
 
-	default public <T extends IBaseBundle> T loadBundle(String theLocation) {
-		return loadBundle(theLocation);
-	}
-
 	default public IBaseResource readResource(String theLocation) {
 		String resourceString = stringFromResource(theLocation);
 		if (theLocation.endsWith("json")) {
@@ -114,5 +111,10 @@ public interface IResourceLoader extends IDaoRegistryUser {
 		} catch (Exception e) {
 			throw new RuntimeException(String.format("Error loading resource from %s", theLocation), e);
 		}
+	}
+
+	default Object loadTransaction(String theLocation) {
+		IBaseBundle resource = (IBaseBundle) readResource(theLocation);
+		return transaction(resource, new SystemRequestDetails());
 	}
 }

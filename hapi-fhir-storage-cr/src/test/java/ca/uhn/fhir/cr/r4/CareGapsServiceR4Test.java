@@ -7,6 +7,7 @@ import ca.uhn.fhir.cr.r4.measure.MeasureService;
 import ca.uhn.fhir.model.primitive.DateDt;
 import ca.uhn.fhir.rest.api.server.RequestDetails;
 import ca.uhn.fhir.rest.api.server.SystemRequestDetails;
+import ca.uhn.fhir.rest.server.exceptions.NotImplementedOperationException;
 import org.hl7.fhir.instance.model.api.IPrimitiveType;
 import org.hl7.fhir.r4.model.CanonicalType;
 import org.hl7.fhir.r4.model.Parameters;
@@ -122,7 +123,6 @@ public class CareGapsServiceR4Test extends BaseCrR4Test {
 
 	@Test
 	void testPeriodStartNull() {
-		beforeEachMeasure();
 		status.add(statusValid);
 		measures.add(measureIdValid);
 		SystemRequestDetails requestDetails = new SystemRequestDetails();
@@ -185,7 +185,6 @@ public class CareGapsServiceR4Test extends BaseCrR4Test {
 
 	@Test
 	void testPeriodEndInvalid() {
-		beforeEachMeasure();
 		status.add(statusValid);
 		measures.add(measureIdValid);
 		SystemRequestDetails requestDetails = new SystemRequestDetails();
@@ -318,7 +317,7 @@ public class CareGapsServiceR4Test extends BaseCrR4Test {
 		SystemRequestDetails requestDetails = new SystemRequestDetails();
 		requestDetails.setFhirContext(getFhirContext());
 		requestDetails.setFhirServerBase("test.com");
-		Parameters result = theCareGapsService.apply(requestDetails).getCareGapsReport(periodStart, periodEnd
+		assertThrows(NotImplementedOperationException.class, () -> theCareGapsService.apply(requestDetails).getCareGapsReport(periodStart, periodEnd
 			, null
 			, null
 			, null
@@ -328,8 +327,7 @@ public class CareGapsServiceR4Test extends BaseCrR4Test {
 			, null
 			, null
 			, null
-		);
-		assertTrue(result.hasParameter("Unsupported configuration"));
+		));
 	}
 
 	@Test
@@ -339,7 +337,7 @@ public class CareGapsServiceR4Test extends BaseCrR4Test {
 		SystemRequestDetails requestDetails = new SystemRequestDetails();
 		requestDetails.setFhirContext(getFhirContext());
 		requestDetails.setFhirServerBase("test.com");
-		Parameters result = theCareGapsService.apply(requestDetails).getCareGapsReport(periodStart, periodEnd
+		assertThrows(NotImplementedOperationException.class, () -> theCareGapsService.apply(requestDetails).getCareGapsReport(periodStart, periodEnd
 			, null
 			, null
 			, practitionerValid
@@ -349,8 +347,7 @@ public class CareGapsServiceR4Test extends BaseCrR4Test {
 			, null
 			, null
 			, null
-		);
-		assertTrue(result.hasParameter("Unsupported configuration"));
+		));
 	}
 
 	@Test
@@ -360,7 +357,7 @@ public class CareGapsServiceR4Test extends BaseCrR4Test {
 		SystemRequestDetails requestDetails = new SystemRequestDetails();
 		requestDetails.setFhirContext(getFhirContext());
 		requestDetails.setFhirServerBase("test.com");
-		Parameters result = theCareGapsService.apply(requestDetails).getCareGapsReport(periodStart, periodEnd
+		assertThrows(NotImplementedOperationException.class, () ->  theCareGapsService.apply(requestDetails).getCareGapsReport(periodStart, periodEnd
 			, null
 			, null
 			, practitionerValid
@@ -370,8 +367,7 @@ public class CareGapsServiceR4Test extends BaseCrR4Test {
 			, null
 			, null
 			, null
-		);
-		assertTrue(result.hasParameter("Unsupported configuration"));
+		));
 	}
 
 	@Test
