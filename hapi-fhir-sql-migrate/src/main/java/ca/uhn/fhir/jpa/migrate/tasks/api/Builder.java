@@ -195,7 +195,7 @@ public class Builder {
 		 */
 		public BuilderCompleteTask dropIndexOnline(String theVersion, String theIndexName) {
 			DropIndexTask task = dropIndexOptional(false, theVersion, theIndexName);
-			task.setOnline(true);
+//			task.setOnline(true); TODO ND - This is breaking postgres migrations. Investigating to determine impact on other tests
 			return new BuilderCompleteTask(task);
 		}
 
