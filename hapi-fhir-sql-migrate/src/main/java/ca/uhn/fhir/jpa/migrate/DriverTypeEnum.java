@@ -234,7 +234,7 @@ public enum DriverTypeEnum {
 
 		@Override
 		public Connection getConnection(String theUsername, String thePassword) throws SQLException {
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(Msg.code(2281));
 		}
 
 		@Override
