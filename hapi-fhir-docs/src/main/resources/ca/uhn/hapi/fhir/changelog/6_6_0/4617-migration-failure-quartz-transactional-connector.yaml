@@ -1,0 +1,6 @@
+---
+type: fix
+issue: 4617
+title: "Previously, migration tasks were failing when they were run using a
+[Quartz Transactional connector](http://www.quartz-scheduler.org/documentation/quartz-1.8.6/configuration/ConfigJobStoreTX.html)
+with a Postgres data source. This has been fixed."
