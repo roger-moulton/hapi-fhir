@@ -164,9 +164,9 @@ public abstract class BaseTask {
 		if (!isDryRun()) {
 			Integer changes;
 			if (myTransactional) {
-				changes = getConnectionProperties().getTxTemplate().execute(t -> doExecuteSql(theSql, theArguments));
+				changes = getConnectionProperties().getTxTemplate().execute(t -> doExecuteSql(newJdbcTemplate(), theSql, theArguments));
 			} else {
-				changes = doExecuteSql(theSql, theArguments);
+				changes = doExecuteSql(newAutoCommitJdbcTemplate(), theSql, theArguments);
 			}
 
 			myChangesCount += changes;
@@ -178,7 +178,7 @@ public abstract class BaseTask {
 	protected void executeSqlListInTransaction(String theTableName, List<String> theSqlStatements) {
 		if (!isDryRun()) {
 			Integer changes;
-			changes = getConnectionProperties().getTxTemplate().execute(t -> doExecuteSqlList(theSqlStatements));
+			changes = getConnectionProperties().getTxTemplate().execute(t -> doExecuteSqlList(newJdbcTemplate(), theSqlStatements));
 			myChangesCount += changes;
 		}
 
@@ -187,21 +187,20 @@ public abstract class BaseTask {
 		}
 	}
 
-	private Integer doExecuteSqlList(List<String> theSqlStatements) {
+	private Integer doExecuteSqlList(JdbcTemplate theJdbcTemplate, List<String> theSqlStatements) {
 		int changesCount = 0;
 		for (String nextSql : theSqlStatements) {
-			changesCount += doExecuteSql(nextSql);
+			changesCount += doExecuteSql(theJdbcTemplate, nextSql);
 		}
 
 		return changesCount;
 	}
 
-	private int doExecuteSql(@Language("SQL") String theSql, Object... theArguments) {
-		JdbcTemplate jdbcTemplate = getConnectionProperties().newJdbcTemplate();
+	private int doExecuteSql(JdbcTemplate theJdbcTemplate, @Language("SQL") String theSql, Object... theArguments) {
 		// 0 means no timeout -- we use this for index rebuilds that may take time.
-		jdbcTemplate.setQueryTimeout(0);
+		theJdbcTemplate.setQueryTimeout(0);
 		try {
-			int changesCount = jdbcTemplate.update(theSql, theArguments);
+			int changesCount = theJdbcTemplate.update(theSql, theArguments);
 			if (!HapiSystemProperties.isUnitTestModeEnabled()) {
 				logInfo(ourLog, "SQL \"{}\" returned {}", theSql, changesCount);
 			}
@@ -247,6 +246,10 @@ public abstract class BaseTask {
 
 	public JdbcTemplate newJdbcTemplate() {
 		return getConnectionProperties().newJdbcTemplate();
+	}
+
+	public JdbcTemplate newAutoCommitJdbcTemplate() {
+		return getConnectionProperties().newAutoCommitJdbcTemplate();
 	}
 
 	public void execute() throws SQLException {

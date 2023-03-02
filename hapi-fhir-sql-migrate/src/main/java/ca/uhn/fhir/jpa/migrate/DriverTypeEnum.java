@@ -15,9 +15,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.annotation.Nonnull;
 import javax.sql.DataSource;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 
 /*-
  * #%L
@@ -158,6 +160,7 @@ public enum DriverTypeEnum {
 
 		private final DriverTypeEnum myDriverType;
 		private final DataSource myDataSource;
+		private final DataSource myAutoCommitDataSource;
 		private final TransactionTemplate myTxTemplate;
 
 		/**
@@ -169,6 +172,7 @@ public enum DriverTypeEnum {
 			Validate.notNull(theDriverType);
 
 			myDataSource = theDataSource;
+			myAutoCommitDataSource = new AutoCommitDataSourceWrapper(theDataSource);
 			myTxTemplate = theTxTemplate;
 			myDriverType = theDriverType;
 		}
@@ -190,6 +194,13 @@ public enum DriverTypeEnum {
 		}
 
 		@Nonnull
+		public JdbcTemplate newAutoCommitJdbcTemplate() {
+			JdbcTemplate jdbcTemplate = new JdbcTemplate();
+			jdbcTemplate.setDataSource(myAutoCommitDataSource);
+			return jdbcTemplate;
+		}
+
+		@Nonnull
 		public TransactionTemplate getTxTemplate() {
 			return myTxTemplate;
 		}
@@ -203,6 +214,62 @@ public enum DriverTypeEnum {
 					ourLog.warn("Could not dispose of driver", e);
 				}
 			}
+		}
+	}
+
+	private static final class AutoCommitDataSourceWrapper implements DataSource {
+
+		private final DataSource myWrap;
+
+		public AutoCommitDataSourceWrapper(DataSource theWrap) {
+			myWrap = theWrap;
+		}
+
+		@Override
+		public Connection getConnection() throws SQLException {
+			Connection connection = myWrap.getConnection();
+			connection.setAutoCommit(true);
+			return connection;
+		}
+
+		@Override
+		public Connection getConnection(String theUsername, String thePassword) throws SQLException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public PrintWriter getLogWriter() throws SQLException {
+			return myWrap.getLogWriter();
+		}
+
+		@Override
+		public void setLogWriter(PrintWriter thePrintWriter) throws SQLException {
+			myWrap.setLogWriter(thePrintWriter);
+		}
+
+		@Override
+		public int getLoginTimeout() throws SQLException {
+			return myWrap.getLoginTimeout();
+		}
+
+		@Override
+		public void setLoginTimeout(int theSeconds) throws SQLException {
+			myWrap.setLoginTimeout(theSeconds);
+		}
+
+		@Override
+		public <T> T unwrap(Class<T> theClass) throws SQLException {
+			return myWrap.unwrap(theClass);
+		}
+
+		@Override
+		public boolean isWrapperFor(Class<?> theClass) throws SQLException {
+			return myWrap.isWrapperFor(theClass);
+		}
+
+		@Override
+		public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
+			return myWrap.getParentLogger();
 		}
 	}
 }

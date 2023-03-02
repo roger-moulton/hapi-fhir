@@ -48,10 +48,12 @@ public class HapiMigrationDao {
 	private final String myMigrationTablename;
 	private final MigrationQueryBuilder myMigrationQueryBuilder;
 	private final DataSource myDataSource;
+	private final DriverTypeEnum.ConnectionProperties myConnectionProperties;
 
 	public HapiMigrationDao(DataSource theDataSource, DriverTypeEnum theDriverType, String theMigrationTablename) {
 		myDataSource = theDataSource;
-		myJdbcTemplate = new JdbcTemplate(theDataSource);
+		myConnectionProperties = theDriverType.newConnectionProperties(theDataSource);
+		myJdbcTemplate = myConnectionProperties.newAutoCommitJdbcTemplate();
 		myMigrationTablename = theMigrationTablename;
 		myMigrationQueryBuilder = new MigrationQueryBuilder(theDriverType, theMigrationTablename);
 	}
