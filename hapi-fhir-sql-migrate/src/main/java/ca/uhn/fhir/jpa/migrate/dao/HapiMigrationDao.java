@@ -30,7 +30,6 @@ import org.flywaydb.core.api.MigrationVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -49,14 +48,12 @@ public class HapiMigrationDao {
 	private final String myMigrationTablename;
 	private final MigrationQueryBuilder myMigrationQueryBuilder;
 	private final DataSource myDataSource;
-	private final DriverTypeEnum.ConnectionProperties myConnectionProperties;
 
 	public HapiMigrationDao(DataSource theDataSource, DriverTypeEnum theDriverType, String theMigrationTablename) {
 		myDataSource = theDataSource;
 		myJdbcTemplate = new JdbcTemplate(theDataSource);
 		myMigrationTablename = theMigrationTablename;
 		myMigrationQueryBuilder = new MigrationQueryBuilder(theDriverType, theMigrationTablename);
-		myConnectionProperties = theDriverType.newConnectionProperties(theDataSource);
 	}
 
 	public String getMigrationTablename() {
@@ -73,7 +70,7 @@ public class HapiMigrationDao {
 	}
 
 	public void deleteAll() {
-		getTxTemplate().executeWithoutResult((status) -> myMigrationQueryBuilder.deleteAll());
+		myJdbcTemplate.execute(myMigrationQueryBuilder.deleteAll());
 	}
 
 	/**
@@ -99,11 +96,7 @@ public class HapiMigrationDao {
 		theEntity.setInstalledBy(VersionEnum.latestVersion().name());
 		theEntity.setInstalledOn(new Date());
 		String insertRecordStatement = myMigrationQueryBuilder.insertPreparedStatement();
-		Integer changedRecordCount = getTxTemplate().execute((status) -> {
-			int numRecords = myJdbcTemplate.update(insertRecordStatement, theEntity.asPreparedStatementSetter());
-			return numRecords;
-		});
-
+		int changedRecordCount = myJdbcTemplate.update(insertRecordStatement, theEntity.asPreparedStatementSetter());
 		return changedRecordCount > 0;
 	}
 
@@ -120,14 +113,14 @@ public class HapiMigrationDao {
 
 		String createTableStatement = myMigrationQueryBuilder.createTableStatement();
 		ourLog.info(createTableStatement);
-		getTxTemplate().executeWithoutResult((status) -> myJdbcTemplate.execute(createTableStatement));
+		myJdbcTemplate.execute(createTableStatement);
 
 		String createIndexStatement = myMigrationQueryBuilder.createIndexStatement();
 		ourLog.info(createIndexStatement);
-		getTxTemplate().executeWithoutResult((status) -> myJdbcTemplate.execute(createIndexStatement));
+		myJdbcTemplate.execute(createIndexStatement);
 
 		HapiMigrationEntity entity = HapiMigrationEntity.tableCreatedRecord();
-		getTxTemplate().executeWithoutResult((status) -> myJdbcTemplate.update(myMigrationQueryBuilder.insertPreparedStatement(), entity.asPreparedStatementSetter()));
+		myJdbcTemplate.update(myMigrationQueryBuilder.insertPreparedStatement(), entity.asPreparedStatementSetter());
 	}
 
 	private boolean migrationTableExists() {
@@ -159,10 +152,7 @@ public class HapiMigrationDao {
 	 * @return true if the record was successfully deleted
 	 */
 	public boolean deleteLockRecord(Integer theLockPid, String theLockDescription) {
-		Integer recordsChanged = getTxTemplate().execute((status) -> {
-			int numRecords = myJdbcTemplate.update(myMigrationQueryBuilder.deleteLockRecordStatement(theLockPid, theLockDescription));
-			return numRecords;
-		});
+		int recordsChanged = myJdbcTemplate.update(myMigrationQueryBuilder.deleteLockRecordStatement(theLockPid, theLockDescription));
 		return recordsChanged > 0;
 	}
 
@@ -170,9 +160,5 @@ public class HapiMigrationDao {
 		String query = myMigrationQueryBuilder.findByPidAndNotDescriptionQuery(theLockPid, theLockDescription);
 
 		return myJdbcTemplate.query(query, HapiMigrationEntity.rowMapper()).stream().findFirst();
-	}
-
-	private TransactionTemplate getTxTemplate(){
-		return myConnectionProperties.getTxTemplate();
 	}
 }
